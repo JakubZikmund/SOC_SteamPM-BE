@@ -1,0 +1,6 @@
+@SOC_SteamPM_BE_HostAddress = http://localhost:5069
+
+GET {{SOC_SteamPM_BE_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
