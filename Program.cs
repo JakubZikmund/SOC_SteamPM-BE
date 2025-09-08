@@ -1,3 +1,4 @@
+using SOC_SteamPM_BE.Middleware;
 using SOC_SteamPM_BE.Services;
 using SOC_SteamPM_BE.Models;
 
@@ -9,41 +10,49 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // TRANSIENT: New instance every time (like disposable cups)
+        // Přidávání vlastních servisů
+        // TRANSIENT: New instance every time 
         // builder.Services.AddTransient<IEmailService, EmailService>();
 
-        // SCOPED: One per request (like one waiter per table)
+        // SCOPED: One per request 
         // builder.Services.AddScoped<IGameDataService, GameDataService>();
 
-        // SINGLETON: One for entire app (like one manager for whole restaurant)
+        // SINGLETON: One for entire app 
         // builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
         
         // Core services
         builder.Services.AddControllers();
-        builder.Services.AddAuthorization();
 
         // HTTP client for external API calls
         builder.Services.AddHttpClient();
 
-        // TODO: Vysvětlit jak funguje to Configure
+        // This is used to bind the configuration to the SteamApiSettings and DataStorageSettings classes
+        // from the appsettings.json file or other configuration sources.
         // Configuration binding
         builder.Services.Configure<SteamApiSettings>(
             builder.Configuration.GetSection("SteamApi"));
         builder.Services.Configure<DataStorageSettings>(
-            builder.Configuration.GetSection("DataStorage"));
+            builder.Configuration.GetSection("DataStorage")); ;
 
         // Register our custom services
-        builder.Services.AddSingleton<IGameDataManager, GameDataManager>(); // Singleton for shared state
-        builder.Services.AddScoped<IGameDataService, GameDataService>();
+        builder.Services.AddSingleton<IGameCacheService, GameSearchCacheService>(); // Singleton for in-memory cache
+        builder.Services.AddScoped<ISteamAPIService, SteamAPIService>(); // Scoped for API calls
+        builder.Services.AddSingleton<IEngineDataManager, EngineDataManager>(); // Singleton for shared state
+        builder.Services.AddScoped<IGameSearchService, GameSearchService>();
+        
         
         // Register the background service
-        builder.Services.AddHostedService<GameDataRefreshService>();
-
+        builder.Services.AddHostedService<GameSearchRefreshService>();
+        
         // API documentation
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
         var app = builder.Build();
+
+        // My own middleware which checks if the service is ready
+        // and if not, returns an error response
+        app.UseEngineStatus();
 
         if (app.Environment.IsDevelopment())
         {
@@ -52,7 +61,6 @@ public class Program
         }
 
         app.UseHttpsRedirection();
-        app.UseAuthorization();
         app.MapControllers();
 
         app.Run();

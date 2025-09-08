@@ -7,5 +7,6 @@ public class SteamApiSettings
 
 public class DataStorageSettings
 {
-    public string FolderPath { get; set; } = "data";
+    public string FolderPath { get; set; } = string.Empty;
+    public bool LoadDataFromFileOnStartup { get; set; } = false;
 }

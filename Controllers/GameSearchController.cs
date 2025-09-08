@@ -8,52 +8,35 @@ namespace SOC_SteamPM_BE.Controllers;
 [ApiController]
 public class GameSearchController : ControllerBase
 {
-    private readonly IGameDataService _gameDataService;
+    private readonly IGameCacheService _gameCache;
     private readonly ILogger<GameSearchController> _logger;
 
-    public GameSearchController(IGameDataService gameDataService, ILogger<GameSearchController> logger)
+    public GameSearchController(IGameCacheService gameCache, ILogger<GameSearchController> logger)
     {
-        _gameDataService = gameDataService;
+        _gameCache = gameCache;
         _logger = logger;
     }
 
-    [HttpGet("games")]
-    public async Task<IActionResult> GetGames()
+    [HttpGet("searchGame")]
+    public IActionResult SearchGames([FromQuery] string search)
     {
         try
         {
-            var games = await _gameDataService.GetGamesAsync();
-            return Ok(games);
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogWarning("GetGames failed: {Message}", ex.Message);
-            
-            // Return specific error based on current state
-            var state = _gameDataService.GetCurrentState();
-            
-            if (state.Status == DataStatus.Updating)
+            // If no search term provided, return empty results
+            if (string.IsNullOrWhiteSpace(search))
             {
-                return StatusCode(503, new { 
-                    error = "Service Updating", 
-                    message = "Game data is currently being updated. Please try again later.",
-                    status = "updating"
-                });
+                return Ok(new { games = new List<SearchGame>(), totalCount = 0, searchTerm = "" });
             }
+
+            // Use cache for fast search
+            var games = _gameCache.SearchGamesByName(search);
             
-            if (state.Status == DataStatus.Loading)
-            {
-                return StatusCode(503, new { 
-                    error = "Service Loading", 
-                    message = "Game data is still loading. Please try again later.",
-                    status = "loading"
-                });
-            }
+            _logger.LogInformation("Search for '{SearchTerm}' returned {Count} results", search, games.Count);
             
-            return StatusCode(500, new { 
-                error = "Service Error", 
-                message = ex.Message,
-                status = "error"
+            return Ok(new { 
+                games, 
+                totalCount = games.Count, 
+                searchTerm = search,
             });
         }
         catch (Exception ex)
@@ -65,43 +48,10 @@ public class GameSearchController : ControllerBase
             });
         }
     }
-
-    [HttpGet("status")]
-    public IActionResult GetStatus()
+    
+    [HttpGet("gamesCount")]
+    public IActionResult GetGamesCount()
     {
-        var state = _gameDataService.GetCurrentState();
-        
-        return Ok(new
-        {
-            status = state.Status.ToString().ToLower(),
-            lastUpdated = state.LastUpdated,
-            gameCount = state.Data?.Applist?.Apps?.Count ?? 0,
-            errorMessage = state.ErrorMessage,
-            updateAttempts = state.UpdateAttempts
-        });
-    }
-
-    [HttpPost("refresh")]
-    public async Task<IActionResult> ForceRefresh()
-    {
-        try
-        {
-            _logger.LogInformation("Manual refresh requested");
-            var success = await _gameDataService.ForceRefreshAsync();
-            
-            if (success)
-            {
-                return Ok(new { message = "Refresh completed successfully" });
-            }
-            else
-            {
-                return StatusCode(500, new { message = "Refresh failed after all attempts" });
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during manual refresh");
-            return StatusCode(500, new { message = "Refresh failed due to unexpected error" });
-        }
+        return Ok(new { count = _gameCache.GetGameCount() });
     }
 }
