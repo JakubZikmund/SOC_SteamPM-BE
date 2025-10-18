@@ -4,20 +4,20 @@ using SOC_SteamPM_BE.Models;
 
 namespace SOC_SteamPM_BE.Services;
 
-public interface ISteamAPIService
+public interface ISteamApiService
 {
     Task<SteamGameResponse> FetchAllGames();
     //TBD: fetch game by id
     Task<object> FetchGameById(int appId);
 }
 
-public class SteamAPIService : ISteamAPIService
+public class SteamApiService : ISteamApiService
 {
     private readonly HttpClient _httpClient;
     private readonly SteamApiSettings _steamSettings;
-    private readonly ILogger<SteamAPIService> _logger;
+    private readonly ILogger<SteamApiService> _logger;
 
-    public SteamAPIService(HttpClient httpClient, IOptions<SteamApiSettings> steamSettings, ILogger<SteamAPIService> logger)
+    public SteamApiService(HttpClient httpClient, IOptions<SteamApiSettings> steamSettings, ILogger<SteamApiService> logger)
     {
         _httpClient = httpClient;
         _steamSettings = steamSettings.Value;

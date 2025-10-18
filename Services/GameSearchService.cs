@@ -13,13 +13,13 @@ public interface IGameSearchService
 
 public class GameSearchService : IGameSearchService
 {
-    private readonly ISteamAPIService _steamApi;
+    private readonly ISteamApiService _steamApi;
     private readonly DataStorageSettings _dataSettings;
     private readonly IEngineDataManager _dataManager;
     private readonly ILogger<GameSearchService> _logger;
 
     public GameSearchService(
-        ISteamAPIService steamApi, 
+        ISteamApiService steamApi, 
         IOptions<DataStorageSettings> dataSettings,
         IEngineDataManager dataManager,
         ILogger<GameSearchService> logger)

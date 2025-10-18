@@ -36,7 +36,7 @@ public class Program
 
         // Register our custom services
         builder.Services.AddSingleton<IGameCacheService, GameSearchCacheService>(); // Singleton for in-memory cache
-        builder.Services.AddScoped<ISteamAPIService, SteamAPIService>(); // Scoped for API calls
+        builder.Services.AddScoped<ISteamApiService, SteamApiService>(); // Scoped for API calls
         builder.Services.AddSingleton<IEngineDataManager, EngineDataManager>(); // Singleton for shared state
         builder.Services.AddScoped<IGameSearchService, GameSearchService>();
         

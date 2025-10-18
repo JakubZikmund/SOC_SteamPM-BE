@@ -13,4 +13,9 @@
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="geojsons\customized_world.json" />
+      <_ContentIncludedByDefault Remove="geojsons\generatedWorld.json" />
+    </ItemGroup>
+
 </Project>
