@@ -2,7 +2,9 @@ namespace SOC_SteamPM_BE.Models;
 
 public class SteamApiSettings
 {
-    public string BaseUrl { get; set; } = string.Empty;
+    public string AllGamesUrl { get; set; } = string.Empty;
+    public string GameAllInfo { get; set; } = string.Empty;
+    public string GamePriceInfo { get; set; } = string.Empty;
 }
 
 public class DataStorageSettings

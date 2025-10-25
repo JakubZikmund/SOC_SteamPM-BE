@@ -1,5 +1,7 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SOC_SteamPM_BE.Services.Steam;
 
 namespace SOC_SteamPM_BE.Controllers
 {
@@ -8,19 +10,21 @@ namespace SOC_SteamPM_BE.Controllers
     public class PriceMapController : ControllerBase
     {
         private readonly ILogger<PriceMapController> _logger;
+        private readonly ISteamApiService _steamApi;
 
-        public PriceMapController(ILogger<PriceMapController> logger)
+        public PriceMapController(ILogger<PriceMapController> logger, ISteamApiService steamApi)
         {
             _logger = logger;
+            _steamApi = steamApi;
         }
 
-        // TBD
         [HttpGet("game/{appId:int}")]
-        public IActionResult GetGameById(int appId)
+        public async Task<IActionResult> GetGameById(int appId)
         {
             try
             {
-                return Ok("This endpoint is not yet implemented.");
+                var data = await _steamApi.FetchGameById(appId, "cz");
+                return Ok(data);
             }
             catch (Exception ex)
             {

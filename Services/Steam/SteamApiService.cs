@@ -7,8 +7,7 @@ namespace SOC_SteamPM_BE.Services.Steam;
 public interface ISteamApiService
 {
     Task<SteamGamesResponse> FetchAllGames();
-    //TBD: fetch game by id
-    Task<object> FetchGameById(int appId);
+    Task<SteamGameApiResponse> FetchGameById(int appId, string cc);
 }
 
 public class SteamApiService : ISteamApiService
@@ -27,9 +26,9 @@ public class SteamApiService : ISteamApiService
 
     public async Task<SteamGamesResponse> FetchAllGames()
     {
-        _logger.LogInformation("Calling Steam API: {Url}", _steamSettings.BaseUrl);
+        _logger.LogInformation("Calling Steam API: {Url}", _steamSettings.AllGamesUrl);
         
-        var response = await _httpClient.GetAsync(_steamSettings.BaseUrl);
+        var response = await _httpClient.GetAsync(_steamSettings.AllGamesUrl);
         response.EnsureSuccessStatusCode();
 
         var jsonContent = await response.Content.ReadAsStringAsync();
@@ -41,9 +40,37 @@ public class SteamApiService : ISteamApiService
         return gameData ?? new SteamGamesResponse();
     }
     
-    public async Task<object> FetchGameById(int appId)
+    public async Task<SteamGameApiResponse> FetchGameById(int appId, string cc)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var url = _steamSettings.GameAllInfo.Replace("{APPID}", appId.ToString()).Replace("{CC}", cc);;
+            _logger.LogInformation("Calling Steam API: {Url}", url);
+            Console.WriteLine(url);
+        
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+        
+            var jsonContent = await response.Content.ReadAsStringAsync();
+            
+            using (JsonDocument document = JsonDocument.Parse(jsonContent))
+            {
+                JsonElement root = document.RootElement;
+    
+                // Získat první (a jediný) property - což je to ID hry
+                var gameProperty = root.EnumerateObject().FirstOrDefault();
+
+                if (!gameProperty.Value.TryGetProperty("data", out JsonElement dataElement))
+                    throw new Exception("Data property not found in Steam API response");
+                var gameData = dataElement.Deserialize<SteamGameApiResponse>();
+
+                _logger.LogInformation("Successfully fetched game info for {AppId} from Steam API", appId);
+                return gameData ?? new SteamGameApiResponse();
+            }
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Failed to fetch game info for {appId} from Steam API", e);
+        }
     }
 }
-
