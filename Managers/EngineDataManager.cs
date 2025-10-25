@@ -1,0 +1,131 @@
+using Microsoft.Extensions.Caching.Memory;
+using SOC_SteamPM_BE.Models;
+
+namespace SOC_SteamPM_BE.Managers;
+
+public interface IEngineDataManager
+{
+    EngineDataState GetCurrentState();
+    Dictionary<string, SearchGameModel> GetSteamGamesDict();
+    Task SetUpdatingStateAsync();
+    Task UpdateSteamGamesDictAsync(Dictionary<string, SearchGameModel> newData);
+    Task SetSteamGamesDictUpdateErrorAsync(string errorMessage);
+    Task ResetUpdateAttemptsAsync();
+    Task IncrementUpdateAttemptsAsync();
+    Task SetEngineStateAsync(EngineStatus status);
+    Task InitializeAsync();
+}
+
+public class EngineDataManager : IEngineDataManager
+{
+    private readonly IMemoryCache _cache;
+    private readonly object _attemptsLock = new object();
+
+    private const string STATUS_KEY = "Status";
+    private const string STEAM_GAMES_KEY = "SteamGamesDict";
+    private const string STEAM_GAMES_LAST_UPDATED_KEY = "SteamGamesDictLastUpdated";
+    private const string STEAM_GAMES_UPDATE_ATTEMPTS = "SteamGamesDictUpdateAttempts";
+    
+    private readonly ILogger<EngineDataManager> _logger;
+
+    public EngineDataManager(ILogger<EngineDataManager> logger, IMemoryCache cache)
+    {
+        _cache = cache;
+        _logger = logger;
+    }
+
+    public Task InitializeAsync()
+    {
+        _cache.Set(STATUS_KEY, EngineStatus.Loading);
+        _cache.Set(STEAM_GAMES_KEY, new Dictionary<string, SearchGameModel>());
+        _cache.Set(STEAM_GAMES_LAST_UPDATED_KEY, "");
+        _cache.Set(STEAM_GAMES_UPDATE_ATTEMPTS, 0);
+        
+        _logger.LogInformation("Data manager initialized successfully.");
+        
+        return Task.CompletedTask;
+    }
+    
+    public EngineDataState GetCurrentState()
+    {
+        if (_cache.TryGetValue(STATUS_KEY, out EngineStatus status)
+            && _cache.TryGetValue(STEAM_GAMES_KEY, out Dictionary<string, SearchGameModel>? steamGamesDict)
+            && _cache.TryGetValue(STEAM_GAMES_LAST_UPDATED_KEY, out DateTime steamGamesDictLastUpdated)
+            && _cache.TryGetValue(STEAM_GAMES_UPDATE_ATTEMPTS, out int steamGamesDictUpdateAttempts))
+        {
+            return new EngineDataState
+            {
+                Status = status,
+                SteamGamesDict = steamGamesDict,
+                SteamGamesDictLastUpdated = steamGamesDictLastUpdated,
+                SteamGamesDictUpdateAttempts = steamGamesDictUpdateAttempts
+            };
+        }
+        throw new Exception("Engine data state is missing some values");
+    }
+
+    public Task SetUpdatingStateAsync()
+    {
+        _cache.Set(STATUS_KEY, EngineStatus.Updating);
+        _logger.LogInformation("Game data status set to: Updating");
+        return Task.CompletedTask;
+    }
+
+    public Task UpdateSteamGamesDictAsync(Dictionary<string, SearchGameModel> newData)
+    {
+        _cache.Set(STEAM_GAMES_KEY, newData);
+        _cache.Set(STATUS_KEY, EngineStatus.Ready);
+        _cache.Set(STEAM_GAMES_LAST_UPDATED_KEY, DateTime.Now);
+        _cache.Set(STEAM_GAMES_UPDATE_ATTEMPTS, 0);
+        
+        _logger.LogInformation("Game data updated successfully. Status: Ready, Games count: {Count}", 
+            newData.Count);
+        
+        return Task.CompletedTask;
+    }
+
+    public Task SetSteamGamesDictUpdateErrorAsync(string errorMessage)
+    {
+        var currentState = GetCurrentState();
+
+        _cache.Set(STATUS_KEY, currentState.SteamGamesDict == null ? EngineStatus.Error : EngineStatus.Ready);
+
+        _logger.LogError("Steam games list update error: {ErrorMessage}. Status: {Status}", errorMessage, currentState.Status);
+        
+        return Task.CompletedTask;
+    }
+
+    public Task SetEngineStateAsync(EngineStatus status)
+    {
+        _cache.Set(STATUS_KEY, status);
+        _logger.LogInformation("Engine status set to: {Status}", status);
+        return Task.CompletedTask;
+    }
+
+    public Task ResetUpdateAttemptsAsync()
+    {
+        _cache.Set(STEAM_GAMES_UPDATE_ATTEMPTS, 0);
+        return Task.CompletedTask;
+    }
+
+    public Task IncrementUpdateAttemptsAsync()
+    {
+        lock (_attemptsLock)
+        {
+            var currentState = GetCurrentState();
+            _cache.Set(STEAM_GAMES_UPDATE_ATTEMPTS, currentState.SteamGamesDictUpdateAttempts++);
+            _logger.LogWarning("Update attempt #{Attempt} failed", currentState.SteamGamesDictUpdateAttempts);    
+            return Task.CompletedTask;
+        }
+    }
+    
+    public Dictionary<string, SearchGameModel> GetSteamGamesDict()
+    {
+        if (_cache.TryGetValue(STEAM_GAMES_KEY, out Dictionary<string, SearchGameModel>? games))
+        {
+            return games ?? throw new Exception("Steam games dictionary is missing");
+        }
+        throw new Exception("Steam games dictionary is missing");
+    }
+}
+
