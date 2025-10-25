@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using SOC_SteamPM_BE.Services;
 using SOC_SteamPM_BE.Models;
+using SOC_SteamPM_BE.Services.GameSearch;
 
 namespace SOC_SteamPM_BE.Controllers;
 
@@ -8,12 +8,12 @@ namespace SOC_SteamPM_BE.Controllers;
 [ApiController]
 public class GameSearchController : ControllerBase
 {
-    private readonly IGameCacheService _gameCache;
+    private readonly IGameSearchService _gameSearchService;
     private readonly ILogger<GameSearchController> _logger;
 
-    public GameSearchController(IGameCacheService gameCache, ILogger<GameSearchController> logger)
+    public GameSearchController(IGameSearchService gameSearchService, ILogger<GameSearchController> logger)
     {
-        _gameCache = gameCache;
+        _gameSearchService = gameSearchService;
         _logger = logger;
     }
 
@@ -25,11 +25,11 @@ public class GameSearchController : ControllerBase
             // If no search term provided, return empty results
             if (string.IsNullOrWhiteSpace(search))
             {
-                return Ok(new { games = new List<SearchGame>(), totalCount = 0, searchTerm = "" });
+                return Ok(new { games = new List<SearchGameModel>(), totalCount = 0, searchTerm = "" });
             }
 
-            // Use cache for fast search
-            var games = _gameCache.SearchGamesByName(search);
+            // Search via facade service
+            var games = _gameSearchService.SearchGamesByName(search);
             
             _logger.LogInformation("Search for '{SearchTerm}' returned {Count} results", search, games.Count);
             
@@ -47,11 +47,5 @@ public class GameSearchController : ControllerBase
                 message = "An unexpected error occurred" 
             });
         }
-    }
-    
-    [HttpGet("gamesCount")]
-    public IActionResult GetGamesCount()
-    {
-        return Ok(new { count = _gameCache.GetGameCount() });
     }
 }

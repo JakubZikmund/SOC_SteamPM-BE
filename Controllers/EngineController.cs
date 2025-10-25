@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SOC_SteamPM_BE.Services;
+using SOC_SteamPM_BE.Services.Engine;
+using SOC_SteamPM_BE.Services.GameSearch;
 
 namespace SOC_SteamPM_BE.Controllers
 {
@@ -8,29 +10,29 @@ namespace SOC_SteamPM_BE.Controllers
     [ApiController]
     public class EngineController : ControllerBase
     {
-        private readonly IGameSearchService _gameSearchService;
-        private readonly IGameCacheService _gameCacheService;
+        private readonly IEngineDataService _engineDataService;
+        private readonly IGameSearchRefreshFromApiService _gameSearchRefresh;
         private readonly ILogger<EngineController> _logger;
 
-        public EngineController(IGameSearchService gameSearchService, IGameCacheService gameCacheService, ILogger<EngineController> logger)
+        public EngineController(IEngineDataService engineDataService, IGameSearchRefreshFromApiService gameSearchRefresh ,ILogger<EngineController> logger)
         {
-            _gameSearchService = gameSearchService;
-            _gameCacheService = gameCacheService;
+            _engineDataService = engineDataService;
+            _gameSearchRefresh = gameSearchRefresh;
             _logger = logger;
         }
 
         [HttpGet("status")]
         public IActionResult GetStatus()
         {
-            var state = _gameSearchService.GetCurrentState();
+            var state = _engineDataService.GetCurrentState();
         
             return Ok(new
             {
                 status = state.Status.ToString().ToLower(),
-                lastUpdated = state.GameSearchLastUpdated,
-                gameCount = state.GameSearchData?.Applist?.Apps?.Count ?? 0,
+                lastUpdated = state.SteamGamesDictLastUpdated,
+                gameCount = state.SteamGamesDict?.Count ?? 0,
                 errorMessage = state.ErrorMessage,
-                updateAttempts = state.GameSearchUpdateAttempts
+                updateAttempts = state.SteamGamesDictUpdateAttempts
             });
         }
         
@@ -40,8 +42,8 @@ namespace SOC_SteamPM_BE.Controllers
             try
             {
                 _logger.LogInformation("Manual refresh requested");
-                var success = await _gameSearchService.ForceRefreshAsync();
-            
+                var success = await _gameSearchRefresh.RefreshFromApiAsync();
+                
                 if (success)
                 {
                     return Ok(new { message = "Refresh completed successfully" });
@@ -53,22 +55,6 @@ namespace SOC_SteamPM_BE.Controllers
             {
                 _logger.LogError(ex, "Error during manual refresh");
                 return StatusCode(500, new { message = "Refresh failed due to unexpected error" });
-            }
-        }
-
-        [HttpGet("clearCache")]
-        public async Task<IActionResult> ClearCache()
-        {
-            try
-            {
-                _gameCacheService.ClearCache();
-                _logger.LogInformation("Cache cleared");
-                return Ok(new { message = "Cache cleared successfully" });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error during cache clear");
-                return StatusCode(500, new { message = "Cache clear failed due to unexpected error" });
             }
         }
     }

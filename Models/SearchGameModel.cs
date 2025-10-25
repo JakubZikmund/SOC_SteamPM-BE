@@ -2,12 +2,7 @@
 
 namespace SOC_SteamPM_BE.Models;
 
-public class Game
-{
-    // TBD
-}
-
-public class SearchGame
+public class SearchGameModel
 {
     [JsonPropertyName("appid")]
     public int AppId { get; set; }
@@ -19,10 +14,10 @@ public class SearchGame
 public class AppList
 {
     [JsonPropertyName("apps")]
-    public List<SearchGame> Apps { get; set; } = new();
+    public List<SearchGameModel> Apps { get; set; } = new();
 }
 
-public class SteamGameResponse
+public class SteamGamesResponse
 {
     [JsonPropertyName("applist")]
     public AppList Applist { get; set; } = new();

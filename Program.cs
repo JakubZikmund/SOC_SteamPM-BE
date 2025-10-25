@@ -1,6 +1,11 @@
+using SOC_SteamPM_BE.Managers;
 using SOC_SteamPM_BE.Middleware;
 using SOC_SteamPM_BE.Services;
 using SOC_SteamPM_BE.Models;
+using SOC_SteamPM_BE.Services.Engine;
+using SOC_SteamPM_BE.Services.GameSearch;
+using SOC_SteamPM_BE.Services.Initialization;
+using SOC_SteamPM_BE.Services.Steam;
 
 namespace SOC_SteamPM_BE;
 
@@ -22,6 +27,7 @@ public class Program
         
         // Core services
         builder.Services.AddControllers();
+        builder.Services.AddMemoryCache();
 
         // HTTP client for external API calls
         builder.Services.AddHttpClient();
@@ -35,14 +41,22 @@ public class Program
             builder.Configuration.GetSection("DataStorage")); ;
 
         // Register our custom services
-        builder.Services.AddSingleton<IGameCacheService, GameSearchCacheService>(); // Singleton for in-memory cache
-        builder.Services.AddScoped<ISteamApiService, SteamApiService>(); // Scoped for API calls
-        builder.Services.AddSingleton<IEngineDataManager, EngineDataManager>(); // Singleton for shared state
-        builder.Services.AddScoped<IGameSearchService, GameSearchService>();
+        builder.Services.AddSingleton<IEngineDataManager, EngineDataManager>(); // State management
+        builder.Services.AddScoped<IEngineDataService, EngineDataService>(); // Facade service (backwards compatibility)
+        
+        // API and external services (Scoped - per request)
+        builder.Services.AddScoped<ISteamApiService, SteamApiService>(); // Steam API client
+        
+        // GameSearch services (Scoped - per request/operation)
+        builder.Services.AddScoped<IGameSearchFileService, GameSearchFileService>(); // File I/O
+        builder.Services.AddScoped<IGameSearchRefreshFromApiService, GameSearchRefreshFromApiService>(); // Refresh orchestration
+        builder.Services.AddScoped<IGameSearchInitializationService, GameSearchInitializationService>(); // Startup initialization
+        builder.Services.AddScoped<IGameSearchService, GameSearchService>(); // Facade service (backwards compatibility)
         
         
-        // Register the background service
-        builder.Services.AddHostedService<GameSearchRefreshService>();
+        // startup & background service
+        builder.Services.AddHostedService<WebApiInitializationService>();
+        builder.Services.AddHostedService<GameSearchSchedulerService>();
         
         // API documentation
         builder.Services.AddEndpointsApiExplorer();
