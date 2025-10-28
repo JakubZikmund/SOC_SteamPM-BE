@@ -1,4 +1,5 @@
-﻿using SOC_SteamPM_BE.Managers;
+﻿using SOC_SteamPM_BE.Exceptions;
+using SOC_SteamPM_BE.Managers;
 using SOC_SteamPM_BE.Services.Currencies;
 using SOC_SteamPM_BE.Services.Steam;
 
@@ -50,9 +51,17 @@ public class PriceMapService : IPriceMapService
             
             return gameInfo;
         }
+        catch (GameNotFoundException)
+        {
+            throw;
+        }
+        catch (InvalidCurrencyException)
+        {
+            throw;
+        }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            _logger.LogError(e, "Unexpected error occurred while fetching game info and prices for AppId {AppId}", appId);
             throw new Exception("An error occurred while fetching game info and prices.", e);
         }
     }

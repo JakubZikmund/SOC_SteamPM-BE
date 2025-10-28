@@ -1,5 +1,7 @@
-﻿using System.Text.Json;
+﻿using System.Net;
+using System.Text.Json;
 using Microsoft.Extensions.Options;
+using SOC_SteamPM_BE.Exceptions;
 using SOC_SteamPM_BE.Models;
 
 namespace SOC_SteamPM_BE.Services.Currencies;
@@ -30,16 +32,38 @@ public class CurrencyApiService : ICurrencyApiService
             _logger.LogInformation($"Calling Currency API to retrieve {currency} exchange rates.");
         
             var response = await _httpClient.GetAsync($"{_baseUrl}{currency}");
+            
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                _logger.LogWarning("Invalid currency code: {Currency}", currency);
+                throw new InvalidCurrencyException(currency);
+            }
+            
             response.EnsureSuccessStatusCode();
 
             var jsonContent = await response.Content.ReadAsStringAsync();
             var currencyData = JsonSerializer.Deserialize<CurrencyModel>(jsonContent);
             
-            return currencyData ?? new CurrencyModel();
+            if (currencyData == null || string.IsNullOrEmpty(currencyData.BaseCurrency))
+            {
+                _logger.LogWarning("Invalid currency code: {Currency}", currency);
+                throw new InvalidCurrencyException(currency);
+            }
+            
+            return currencyData;
+        }
+        catch (InvalidCurrencyException)
+        {
+            throw;
+        }
+        catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound)
+        {
+            _logger.LogWarning("Invalid currency code: {Currency}", currency);
+            throw new InvalidCurrencyException(currency, $"Currency code '{currency}' is not supported.", e);
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            _logger.LogError(e, "Unexpected error while fetching currency {Currency}", currency);
             throw new Exception($"An error occurred while fetching currency {currency}.", e);
         }
     }

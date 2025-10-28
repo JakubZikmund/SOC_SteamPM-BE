@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.Extensions.Options;
+using SOC_SteamPM_BE.Exceptions;
 using SOC_SteamPM_BE.Models;
 using SOC_SteamPM_BE.Utils;
 
@@ -59,19 +60,29 @@ public class SteamApiService : ISteamApiService
 
             if (!dataProperty.Value.TryGetProperty("success", out JsonElement successElement) || !successElement.GetBoolean())
             {
-                throw new Exception("Fetching game information from Steam API failed. (wrong appid?)");
+                _logger.LogWarning("Game with AppId {AppId} not found in Steam API", appId);
+                throw new GameNotFoundException(appId);
             }
             
             if (!dataProperty.Value.TryGetProperty("data", out JsonElement dataElement))
-                throw new Exception("Data property not found in Steam API response");
+            {
+                _logger.LogError("Data property not found in Steam API response for AppId {AppId}", appId);
+                throw new GameNotFoundException(appId, "Data property not found in Steam API response");
+            }
+            
             var gameData = dataElement.Deserialize<SteamGameApiResponse>();
 
             _logger.LogInformation("Successfully fetched game info for {AppId} from Steam API", appId);
             return gameData ?? new SteamGameApiResponse();
             
         }
+        catch (GameNotFoundException)
+        {
+            throw;
+        }
         catch (Exception e)
         {
+            _logger.LogError(e, "Unexpected error while fetching game info for AppId {AppId}", appId);
             throw new Exception($"Failed to fetch game info for {appId} from Steam API", e);
         }
     }
@@ -103,7 +114,8 @@ public class SteamApiService : ISteamApiService
                     // so if the game is not available in US, it is probably not available in any other country and throw exception.
                     if (cc.Equals("us"))
                     {
-                        throw new Exception("Fetching game information from Steam API failed. (wrong appid?)");    
+                        _logger.LogWarning("Game with AppId {AppId} not found in Steam API", appId);
+                        throw new GameNotFoundException(appId);    
                     }
                     _logger.LogWarning("Game is not available in country {Currency}. Skipping...", cc);
                     continue;
@@ -128,9 +140,13 @@ public class SteamApiService : ISteamApiService
 
                 priceList.Add(price);
             }
+            catch (GameNotFoundException)
+            {
+                throw;
+            }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                _logger.LogError(e, "An error occurred while fetching game prices for AppId {AppId} in currency {Currency}", appId, cc);
                 throw new Exception($"An error occurred while fetching game prices for currency {cc}.", e);
             }
         }

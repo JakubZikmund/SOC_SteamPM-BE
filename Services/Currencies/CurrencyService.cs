@@ -1,4 +1,5 @@
-﻿using SOC_SteamPM_BE.Managers;
+﻿using SOC_SteamPM_BE.Exceptions;
+using SOC_SteamPM_BE.Managers;
 using SOC_SteamPM_BE.Models;
 
 namespace SOC_SteamPM_BE.Services.Currencies;
@@ -36,29 +37,33 @@ public class CurrencyService : ICurrencyService
             
             foreach (var keyValuePair in pricesToConvert)
             {
-                ConvertPrice(keyValuePair.Value, keyValuePair.Key, currData);
+                ConvertPrice(keyValuePair.Value, keyValuePair.Key, currData, currency);
             }
+        }
+        catch (InvalidCurrencyException)
+        {
+            throw;
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            _logger.LogError(e, "Unexpected error while processing currencies for {Currency}", currency);
             throw new Exception("An error occurred while proccesing currencies.", e);
         }
     }
 
-    void ConvertPrice(Price price, string currentCurr, CurrencyModel currData)
+    void ConvertPrice(Price price, string currentCurr, CurrencyModel currData, string targetCurrency)
     {
         var usdRegions = new[] { "USD-LATAM", "USD-CIS", "USD-SASIA", "USD-MENA" };
-        if (usdRegions.Contains(currentCurr))
+        string lookupCurrency = usdRegions.Contains(currentCurr) ? "USD" : currentCurr;
+        
+        if (!currData.ConversionalRates.ContainsKey(lookupCurrency))
         {
-            price.ConvertedInitial = price.Initial/currData.ConversionalRates["USD"];
-            price.ConvertedFinal = price.Final/currData.ConversionalRates["USD"];
+            _logger.LogError("Currency {Currency} not found in conversion rates for target currency {TargetCurrency}", lookupCurrency, targetCurrency);
+            throw new InvalidCurrencyException(targetCurrency, $"Unable to convert from {lookupCurrency} to {targetCurrency}. Currency code not found in conversion rates.");
         }
-        else
-        {
-            price.ConvertedInitial = price.Initial/currData.ConversionalRates[currentCurr];
-            price.ConvertedFinal = price.Final/currData.ConversionalRates[currentCurr];
-        }
+        
+        price.ConvertedInitial = price.Initial / currData.ConversionalRates[lookupCurrency];
+        price.ConvertedFinal = price.Final / currData.ConversionalRates[lookupCurrency];
     }
     
 }
