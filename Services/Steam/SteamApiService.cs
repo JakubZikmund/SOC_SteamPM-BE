@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using SOC_SteamPM_BE.Models;
+using SOC_SteamPM_BE.Utils;
 
 namespace SOC_SteamPM_BE.Services.Steam;
 
@@ -8,6 +9,7 @@ public interface ISteamApiService
 {
     Task<SteamGamesResponse> FetchAllGames();
     Task<SteamGameApiResponse> FetchGameById(int appId, string cc);
+    Task<List<SteamPrice>> FetchGamePrices(int appId, string[] ccs);
 }
 
 public class SteamApiService : ISteamApiService
@@ -52,25 +54,70 @@ public class SteamApiService : ISteamApiService
             response.EnsureSuccessStatusCode();
         
             var jsonContent = await response.Content.ReadAsStringAsync();
-            
-            using (JsonDocument document = JsonDocument.Parse(jsonContent))
+
+            var dataProperty = DataFactory.ClearFirstLayerOfJsonData(jsonContent);
+
+            if (!dataProperty.Value.TryGetProperty("success", out JsonElement successElement) || !successElement.GetBoolean())
             {
-                JsonElement root = document.RootElement;
-    
-                // Získat první (a jediný) property - což je to ID hry
-                var gameProperty = root.EnumerateObject().FirstOrDefault();
-
-                if (!gameProperty.Value.TryGetProperty("data", out JsonElement dataElement))
-                    throw new Exception("Data property not found in Steam API response");
-                var gameData = dataElement.Deserialize<SteamGameApiResponse>();
-
-                _logger.LogInformation("Successfully fetched game info for {AppId} from Steam API", appId);
-                return gameData ?? new SteamGameApiResponse();
+                throw new Exception("Fetching game information from Steam API failed. (wrong appid?)");
             }
+            
+            if (!dataProperty.Value.TryGetProperty("data", out JsonElement dataElement))
+                throw new Exception("Data property not found in Steam API response");
+            var gameData = dataElement.Deserialize<SteamGameApiResponse>();
+
+            _logger.LogInformation("Successfully fetched game info for {AppId} from Steam API", appId);
+            return gameData ?? new SteamGameApiResponse();
+            
         }
         catch (Exception e)
         {
             throw new Exception($"Failed to fetch game info for {appId} from Steam API", e);
         }
+    }
+    
+    public async Task<List<SteamPrice>> FetchGamePrices(int appId, string[] ccs)
+    {
+        var priceList = new List<SteamPrice>();
+        var baseUrl = _steamSettings.GamePriceInfo.Replace("{APPID}", appId.ToString());
+
+        foreach (var cc in ccs)
+        {
+            try
+            {
+                var url = baseUrl.Replace("{CC}", cc);
+                _logger.LogInformation($"Calling Steam API for currency: {cc}");
+            
+                var response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+                
+                var jsonContent = await response.Content.ReadAsStringAsync();
+                
+                Console.WriteLine(jsonContent);
+
+                var dataProperty = DataFactory.ClearFirstLayerOfJsonData(jsonContent);
+
+                if (!dataProperty.Value.TryGetProperty("success", out JsonElement successElement) || !successElement.GetBoolean())
+                {
+                    throw new Exception("Fetching game information from Steam API failed. (wrong appid?)");
+                }
+            
+                if (!dataProperty.Value.TryGetProperty("data", out JsonElement dataElement))
+                    throw new Exception("Data property not found in Steam API response");
+                
+                if (!dataElement.TryGetProperty("price_overview", out JsonElement priceElement))
+                    throw new Exception("Price overview property not found in Steam API response");
+                    
+                var price = priceElement.Deserialize<SteamPrice>();
+                priceList.Add(price);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw new Exception($"An error occurred while fetching game prices for currency {cc}.", e);
+            }
+        }
+        
+        return priceList;
     }
 }

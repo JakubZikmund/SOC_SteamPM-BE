@@ -1,10 +1,11 @@
 using SOC_SteamPM_BE.Managers;
 using SOC_SteamPM_BE.Middleware;
-using SOC_SteamPM_BE.Services;
 using SOC_SteamPM_BE.Models;
+using SOC_SteamPM_BE.Services.Currencies;
 using SOC_SteamPM_BE.Services.Engine;
 using SOC_SteamPM_BE.Services.GameSearch;
 using SOC_SteamPM_BE.Services.Initialization;
+using SOC_SteamPM_BE.Services.PriceMap;
 using SOC_SteamPM_BE.Services.Steam;
 
 namespace SOC_SteamPM_BE;
@@ -28,30 +29,35 @@ public class Program
         // Core services
         builder.Services.AddControllers();
         builder.Services.AddMemoryCache();
-
-        // HTTP client for external API calls
-        builder.Services.AddHttpClient();
-
-        // This is used to bind the configuration to the SteamApiSettings and DataStorageSettings classes
-        // from the appsettings.json file or other configuration sources.
-        // Configuration binding
+        
+        // Configuration binding - appsettings.json
         builder.Services.Configure<SteamApiSettings>(
             builder.Configuration.GetSection("SteamApi"));
         builder.Services.Configure<DataStorageSettings>(
-            builder.Configuration.GetSection("DataStorage")); ;
+            builder.Configuration.GetSection("DataStorage"));
+        builder.Services.Configure<CurrencySettings>(
+            builder.Configuration.GetSection("CurrencyApi"));
 
         // Register our custom services
+        builder.Services.AddHttpClient();
         builder.Services.AddSingleton<IEngineDataManager, EngineDataManager>(); // State management
         builder.Services.AddScoped<IEngineDataService, EngineDataService>(); // Facade service (backwards compatibility)
         
-        // API and external services (Scoped - per request)
-        builder.Services.AddScoped<ISteamApiService, SteamApiService>(); // Steam API client
+        // API 
+        builder.Services.AddScoped<ISteamApiService, SteamApiService>();
+        builder.Services.AddScoped<ICurrencyApiService, CurrencyApiService>(); 
         
-        // GameSearch services (Scoped - per request/operation)
-        builder.Services.AddScoped<IGameSearchFileService, GameSearchFileService>(); // File I/O
-        builder.Services.AddScoped<IGameSearchRefreshFromApiService, GameSearchRefreshFromApiService>(); // Refresh orchestration
-        builder.Services.AddScoped<IGameSearchInitializationService, GameSearchInitializationService>(); // Startup initialization
-        builder.Services.AddScoped<IGameSearchService, GameSearchService>(); // Facade service (backwards compatibility)
+        // Price map services
+        builder.Services.AddScoped<IPriceMapService, PriceMapService>();
+        
+        // Currency services
+        builder.Services.AddScoped<ICurrencyService, CurrencyService>();
+        
+        // GameSearch services
+        builder.Services.AddScoped<IGameSearchFileService, GameSearchFileService>(); 
+        builder.Services.AddScoped<IGameSearchRefreshFromApiService, GameSearchRefreshFromApiService>(); 
+        builder.Services.AddScoped<IGameSearchInitializationService, GameSearchInitializationService>(); 
+        builder.Services.AddScoped<IGameSearchService, GameSearchService>();
         
         
         // startup & background service
@@ -64,8 +70,7 @@ public class Program
 
         var app = builder.Build();
 
-        // My own middleware which checks if the service is ready
-        // and if not, returns an error response
+        // Middleware
         app.UseEngineStatus();
 
         if (app.Environment.IsDevelopment())

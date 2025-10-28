@@ -18,9 +18,4 @@
       <_ContentIncludedByDefault Remove="geojsons\generatedWorld.json" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Services\Currencies\" />
-      <Folder Include="Services\PriceMap\" />
-    </ItemGroup>
-
 </Project>

@@ -1,4 +1,5 @@
-﻿using SOC_SteamPM_BE.Models;
+﻿using System.Text.Json;
+using SOC_SteamPM_BE.Models;
 
 namespace SOC_SteamPM_BE.Utils;
 
@@ -23,5 +24,14 @@ public static class DataFactory
             gamesByNameLowercase[nameLower] = game;
         }
         return gamesByNameLowercase;
+    }
+    
+    public static JsonProperty ClearFirstLayerOfJsonData(string jsonContent)
+    {
+        var document = JsonDocument.Parse(jsonContent);
+        
+        var root = document.RootElement;
+        
+        return root.EnumerateObject().FirstOrDefault();
     }
 }

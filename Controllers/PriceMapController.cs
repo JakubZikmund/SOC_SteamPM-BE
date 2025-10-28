@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SOC_SteamPM_BE.Services.PriceMap;
 using SOC_SteamPM_BE.Services.Steam;
 
 namespace SOC_SteamPM_BE.Controllers
@@ -9,21 +10,21 @@ namespace SOC_SteamPM_BE.Controllers
     [ApiController]
     public class PriceMapController : ControllerBase
     {
+        private readonly IPriceMapService _priceMapService;
         private readonly ILogger<PriceMapController> _logger;
-        private readonly ISteamApiService _steamApi;
 
-        public PriceMapController(ILogger<PriceMapController> logger, ISteamApiService steamApi)
+        public PriceMapController(ILogger<PriceMapController> logger, IPriceMapService priceMapService)
         {
+            _priceMapService = priceMapService;
             _logger = logger;
-            _steamApi = steamApi;
         }
 
         [HttpGet("game/{appId:int}")]
-        public async Task<IActionResult> GetGameById(int appId)
+        public async Task<IActionResult> GetGameById(int appId, [FromQuery] string currency = "EUR")
         {
             try
             {
-                var data = await _steamApi.FetchGameById(appId, "cz");
+                var data = await _priceMapService.GetGameInfoAndPrices(appId, currency);
                 return Ok(data);
             }
             catch (Exception ex)

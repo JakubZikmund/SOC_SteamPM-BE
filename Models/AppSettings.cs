@@ -12,3 +12,9 @@ public class DataStorageSettings
     public string FolderPath { get; set; } = string.Empty;
     public bool LoadDataFromFileOnStartup { get; set; } = false;
 }
+
+public class CurrencySettings
+{
+    public string BaseUrl { get; set; } = string.Empty;
+    public string ApiKey { get; set; } = string.Empty;
+}

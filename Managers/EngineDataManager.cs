@@ -14,6 +14,10 @@ public interface IEngineDataManager
     Task IncrementUpdateAttemptsAsync();
     Task SetEngineStateAsync(EngineStatus status);
     Task InitializeAsync();
+    bool TryGetCachedPriceMap(string gameKey, out GameInfo priceMap);
+    void SetCachedPriceMap(string gameKey, GameInfo priceMap);
+    bool TryGetCachedCurrency(string currKey, out CurrencyModel currData);
+    void SetCachedCurrency(string currKey, CurrencyModel currData);
 }
 
 public class EngineDataManager : IEngineDataManager
@@ -126,6 +130,40 @@ public class EngineDataManager : IEngineDataManager
             return games ?? throw new Exception("Steam games dictionary is missing");
         }
         throw new Exception("Steam games dictionary is missing");
+    }
+
+    public bool TryGetCachedPriceMap(string gameKey, out GameInfo priceMap)
+    {
+        if (_cache.TryGetValue(gameKey, out priceMap))
+        {
+            _logger.LogInformation($"Price map for game with key {gameKey} was found in cache");
+            return true;
+        }
+        _logger.LogInformation($"Price map for game with key {gameKey} was not found in cache");
+        return false;
+    }
+
+    public void SetCachedPriceMap(string gameKey, GameInfo priceMap)
+    {
+        var cacheOptions = new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(24));
+        _cache.Set(gameKey, priceMap, cacheOptions);
+    }
+    
+    public bool TryGetCachedCurrency(string currKey, out CurrencyModel currData)
+    {
+        if (_cache.TryGetValue(currKey, out currData))
+        {
+            _logger.LogInformation($"Currency with key {currKey} was found in cache");
+            return true;
+        }
+        _logger.LogInformation($"Currency with key {currKey} was not found in cache");
+        return false;
+    }
+
+    public void SetCachedCurrency(string currKey, CurrencyModel currData)
+    {
+        var cacheOptions = new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(24));
+        _cache.Set(currKey, currData, cacheOptions);
     }
 }
 

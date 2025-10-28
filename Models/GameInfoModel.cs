@@ -1,6 +1,4 @@
-﻿// Třída pro deserializaci ze Steam API
-
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 public class SteamGameApiResponse
 {
@@ -32,7 +30,7 @@ public class SteamGameApiResponse
     public string HeaderImage {get; set;} = string.Empty;
     
     [JsonPropertyName("price_overview")]
-    public SteamPrice? PriceOverview {get; set;} // Jeden objekt ze Steam API
+    public SteamPrice? PriceOverview {get; set;} 
 }
 
 public class SteamItem
@@ -44,49 +42,64 @@ public class SteamItem
 public class SteamDateItem
 {
     [JsonPropertyName("date")]
-    public string Description {get; set;} = string.Empty;
+    public string Date {get; set;} = string.Empty;
 }
 
-// Třída pro cenu ze Steam API (bez converted)
 public class SteamPrice
 {
     [JsonPropertyName("currency")]
     public string Currency {get; set;} = string.Empty;
 
     [JsonPropertyName("initial")]
-    public int Initial {get; set;}
-
+    public decimal Initial {get; set;}
+  
     [JsonPropertyName("discount_percent")]
     public int DiscountPercent {get; set;}
 
     [JsonPropertyName("final")]
-    public int Final {get; set;}
+    public decimal Final {get; set;}
 }
 
-// Tvoje interní třída s Dictionary
 public class GameInfo
 {
-    public string Name {get; set;} = string.Empty;
+    public GameInfo(string name, int appId, string shortDescription, string releaseDate, List<string> developers, List<string> publishers, string headerImage)
+    {
+        Name = name;
+        AppId = appId;
+        ShortDescription = shortDescription;
+        ReleaseDate = releaseDate;
+        Developers = developers;
+        Publishers = publishers;
+        HeaderImage = headerImage;
+    }
+
+    public string Name {get; set;}
     public int AppId {get; set;}
-    public string ShortDescription {get; set;} = string.Empty;
-    public string ReleaseDate {get; set;} = string.Empty;
+    public string ShortDescription {get; set;}
+    public string ReleaseDate {get; set;}
     public List<string> Developers {get; set;}
     public List<string> Publishers {get; set;}
     public List<string> Categories {get; set;}
     public List<string> Genres {get; set;}
-    public string HeaderImage {get; set;} = string.Empty;
+    public string HeaderImage {get; set;} 
     
-    // Dictionary s tvými rozšířenými cenami
     public Dictionary<string, Price> PriceOverview {get; set;} = new();
 }
 
-// Tvoje rozšířená třída pro cenu (s converted)
 public class Price
 {
+    public Price(int discountPercent, decimal final, decimal initial, decimal? convertedFinal = null, decimal? convertedInitial = null)
+    {
+        DiscountPercent = discountPercent;
+        Initial = initial / 100m;
+        Final = final / 100m;
+        ConvertedInitial = convertedInitial;
+        ConvertedFinal = convertedFinal;
+    }
+
     public int DiscountPercent {get; set;}
-    public int Final {get; set;}
-    public int Initial {get; set;}
-    
-    // Tvůj vlastní atribut
-    public int Converted {get; set;}
+    public decimal Initial { get; set; }
+    public decimal Final {get; set;}
+    public decimal? ConvertedInitial { get; set; }
+    public decimal? ConvertedFinal { get; set; }
 }
