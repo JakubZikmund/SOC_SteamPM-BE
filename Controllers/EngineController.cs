@@ -21,6 +21,11 @@ namespace SOC_SteamPM_BE.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// Gets the current status of the game data engine
+        /// </summary>
+        /// <returns>Current engine status including game count and last update time</returns>
+        /// <response code="200">Returns the engine status</response>
         [HttpGet("status")]
         public IActionResult GetStatus()
         {
@@ -36,6 +41,12 @@ namespace SOC_SteamPM_BE.Controllers
             });
         }
         
+        /// <summary>
+        /// Manually triggers a refresh of game data from Steam API
+        /// </summary>
+        /// <returns>Result of the refresh operation</returns>
+        /// <response code="200">Refresh completed successfully</response>
+        /// <response code="500">Refresh failed</response>
         [HttpGet("refresh")]
         public async Task<IActionResult> ForceRefresh()
         {

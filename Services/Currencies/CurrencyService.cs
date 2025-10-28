@@ -1,6 +1,7 @@
 ﻿using SOC_SteamPM_BE.Exceptions;
 using SOC_SteamPM_BE.Managers;
 using SOC_SteamPM_BE.Models;
+using SOC_SteamPM_BE.Utils;
 
 namespace SOC_SteamPM_BE.Services.Currencies;
 
@@ -27,12 +28,12 @@ public class CurrencyService : ICurrencyService
         try
         {
             _logger.LogInformation("Converting prices to {Currency}", currency);
-            if (!_dataManager.TryGetCachedCurrency($"curr-{currency}", out var currData))
+            if (!_dataManager.TryGetCachedCurrency(CacheKeys.Currency(currency), out var currData))
             {
                 currData = await _currencyApiService.FetchCurrency(currency);
             
                 // uložení do paměti
-                _dataManager.SetCachedCurrency($"curr-{currData.BaseCurrency}", currData);
+                _dataManager.SetCachedCurrency(CacheKeys.Currency(currency), currData);
             }
             
             foreach (var keyValuePair in pricesToConvert)

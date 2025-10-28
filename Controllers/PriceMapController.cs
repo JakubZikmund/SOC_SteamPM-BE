@@ -1,9 +1,11 @@
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SOC_SteamPM_BE.Exceptions;
 using SOC_SteamPM_BE.Services.PriceMap;
 using SOC_SteamPM_BE.Services.Steam;
+using SOC_SteamPM_BE.Utils;
 
 namespace SOC_SteamPM_BE.Controllers
 {
@@ -20,12 +22,42 @@ namespace SOC_SteamPM_BE.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// Retrieves game information and prices for a specific Steam AppId
+        /// </summary>
+        /// <param name="appId">The Steam Application ID (must be positive)</param>
+        /// <param name="currency">Target currency code (3 uppercase letters, e.g., EUR, USD, CZK)</param>
+        /// <returns>Game information with converted prices</returns>
+        /// <response code="200">Returns the game information with prices</response>
+        /// <response code="400">If the request parameters are invalid</response>
+        /// <response code="404">If the game is not found</response>
         [HttpGet("game/{appId:int}")]
-        public async Task<IActionResult> GetGameById(int appId, [FromQuery] string currency = "EUR")
+        public async Task<IActionResult> GetGameById(
+            [Range(ValidationConstants.MinAppId, ValidationConstants.MaxAppId, 
+                ErrorMessage = ValidationConstants.AppIdErrorMessage)] 
+            int appId, 
+            [FromQuery]
+            [RegularExpression(ValidationConstants.CurrencyPattern, 
+                ErrorMessage = ValidationConstants.CurrencyErrorMessage)]
+            [StringLength(ValidationConstants.CurrencyLength, MinimumLength = ValidationConstants.CurrencyLength)]
+            string currency = "EUR")
         {
+            // Validate ModelState
+            if (!ModelState.IsValid)
+            {
+                _logger.LogWarning("Invalid request parameters: {Errors}", 
+                    string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+                return BadRequest(new 
+                { 
+                    error = "Validation Failed", 
+                    message = "Invalid request parameters.",
+                    errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
+                });
+            }
+            
             try
             {
-                var data = await _priceMapService.GetGameInfoAndPrices(appId, currency);
+                var data = await _priceMapService.GetGameInfoAndPrices(appId, currency.ToUpperInvariant());
                 return Ok(data);
             }
             catch (GameNotFoundException ex)

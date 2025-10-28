@@ -48,7 +48,6 @@ public class SteamApiService : ISteamApiService
         {
             var url = _steamSettings.GameAllInfo.Replace("{APPID}", appId.ToString()).Replace("{CC}", cc);;
             _logger.LogInformation("Calling Steam API: {Url}", url);
-            Console.WriteLine(url);
         
             var response = await _httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
@@ -103,8 +102,6 @@ public class SteamApiService : ISteamApiService
                 
                 var jsonContent = await response.Content.ReadAsStringAsync();
                 
-                Console.WriteLine(jsonContent);
-
                 var dataProperty = ClearFirstLayerOfJsonData(jsonContent);
 
                 if (!dataProperty.Value.TryGetProperty("success", out JsonElement successElement) || !successElement.GetBoolean())

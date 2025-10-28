@@ -31,8 +31,7 @@ public class GameSearchSchedulerService : BackgroundService
                 {
                     _logger.LogInformation("Midnight reached, starting scheduled refresh");
                     
-                    using var scope = _serviceProvider.CreateScope();
-                    var refreshDataService = scope.ServiceProvider.GetRequiredService<GameSearchRefreshFromApiService>();
+                    var refreshDataService = _serviceProvider.GetRequiredService<IGameSearchRefreshFromApiService>();
                     
                     var success = await refreshDataService.RefreshFromApiAsync();
                     

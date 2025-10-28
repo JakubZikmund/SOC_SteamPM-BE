@@ -1,0 +1,85 @@
+### Steam Price Map API - Validation Tests
+### This file contains examples of valid and invalid requests to test input validation
+
+### VALID REQUESTS ###
+
+### Valid request - Get game info with EUR currency
+GET https://localhost:5001/api/PriceMap/game/730?currency=EUR
+Accept: application/json
+
+###
+
+### Valid request - Get game info with USD currency
+GET https://localhost:5001/api/PriceMap/game/730?currency=USD
+Accept: application/json
+
+###
+
+### Valid request - Search for games
+GET https://localhost:5001/api/GameSearch/searchGame?search=Counter-Strike
+Accept: application/json
+
+###
+
+### Valid request - Get engine status
+GET https://localhost:5001/api/Engine/status
+Accept: application/json
+
+###
+
+### INVALID REQUESTS - Testing Validation ###
+
+### Invalid AppId - Zero
+GET https://localhost:5001/api/PriceMap/game/0?currency=EUR
+Accept: application/json
+
+###
+
+### Invalid AppId - Negative
+GET https://localhost:5001/api/PriceMap/game/-1?currency=EUR
+Accept: application/json
+
+###
+
+### Invalid Currency - Too short
+GET https://localhost:5001/api/PriceMap/game/730?currency=EU
+Accept: application/json
+
+###
+
+### Invalid Currency - Too long
+GET https://localhost:5001/api/PriceMap/game/730?currency=EURO
+Accept: application/json
+
+###
+
+### Invalid Currency - Lowercase
+GET https://localhost:5001/api/PriceMap/game/730?currency=eur
+Accept: application/json
+
+###
+
+### Invalid Currency - Numbers
+GET https://localhost:5001/api/PriceMap/game/730?currency=123
+Accept: application/json
+
+###
+
+### Invalid Currency - Special characters
+GET https://localhost:5001/api/PriceMap/game/730?currency=E$R
+Accept: application/json
+
+###
+
+### Invalid Search - Empty string (will return empty results, not error)
+GET https://localhost:5001/api/GameSearch/searchGame?search=
+Accept: application/json
+
+###
+
+### Invalid Search - Too long (over 200 characters)
+GET https://localhost:5001/api/GameSearch/searchGame?search=ThisIsAVeryLongSearchTermThatExceedsTwoHundredCharactersWhichIsTheMaximumAllowedLengthForSearchQueriesInThisAPIThisIsDesignedToTestTheValidationLogicAndEnsureThatItProperlyRejectsSearchTermsThatAreTooLongAndPreventsAnyPotentialIssuesWithDatabaseOrPerformance
+Accept: application/json
+
+###
+

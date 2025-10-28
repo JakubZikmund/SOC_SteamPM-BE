@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.RateLimiting;
 using SOC_SteamPM_BE.Managers;
 using SOC_SteamPM_BE.Middleware;
 using SOC_SteamPM_BE.Models;
@@ -66,7 +67,32 @@ public class Program
         
         // API documentation
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+            {
+                Title = "Steam Price Map API",
+                Version = "v1",
+                Description = "API for searching Steam games and retrieving price information across different regions"
+            });
+            
+            // Enable XML comments for Swagger documentation
+            var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+            if (File.Exists(xmlPath))
+            {
+                options.IncludeXmlComments(xmlPath);
+            }
+        });
+
+        builder.Services.AddRateLimiter(options =>
+            {
+                options.AddFixedWindowLimiter("SteamPM", opt =>
+                {
+                    opt.Window = TimeSpan.FromMinutes(1);
+                    opt.PermitLimit = 10;
+                });
+            });
 
         var app = builder.Build();
 

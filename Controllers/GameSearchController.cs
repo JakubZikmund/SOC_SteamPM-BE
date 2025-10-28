@@ -1,6 +1,8 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using SOC_SteamPM_BE.Models;
 using SOC_SteamPM_BE.Services.GameSearch;
+using SOC_SteamPM_BE.Utils;
 
 namespace SOC_SteamPM_BE.Controllers;
 
@@ -17,9 +19,33 @@ public class GameSearchController : ControllerBase
         _logger = logger;
     }
 
+    /// <summary>
+    /// Searches for Steam games by name
+    /// </summary>
+    /// <param name="search">Search term (1-200 characters)</param>
+    /// <returns>List of matching games (max 10 results)</returns>
+    /// <response code="200">Returns matching games</response>
+    /// <response code="400">If the search parameter is invalid</response>
     [HttpGet("searchGame")]
-    public IActionResult SearchGames([FromQuery] string search)
+    public IActionResult SearchGames(
+        [FromQuery]
+        [StringLength(ValidationConstants.MaxSearchLength, MinimumLength = ValidationConstants.MinSearchLength,
+            ErrorMessage = ValidationConstants.SearchErrorMessage)]
+        string? search)
     {
+        // Validate ModelState
+        if (!ModelState.IsValid)
+        {
+            _logger.LogWarning("Invalid search parameters: {Errors}", 
+                string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+            return BadRequest(new 
+            { 
+                error = "Validation Failed", 
+                message = "Invalid search parameters.",
+                errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
+            });
+        }
+        
         try
         {
             // If no search term provided, return empty results
@@ -28,15 +54,18 @@ public class GameSearchController : ControllerBase
                 return Ok(new { games = new List<SearchGameModel>(), totalCount = 0, searchTerm = "" });
             }
 
-            // Search via facade service
-            var games = _gameSearchService.SearchGamesByName(search);
+            // Sanitize input - trim and remove excess whitespace
+            var sanitizedSearch = search.Trim();
             
-            _logger.LogInformation("Search for '{SearchTerm}' returned {Count} results", search, games.Count);
+            // Search via facade service
+            var games = _gameSearchService.SearchGamesByName(sanitizedSearch);
+            
+            _logger.LogInformation("Search for '{SearchTerm}' returned {Count} results", sanitizedSearch, games.Count);
             
             return Ok(new { 
                 games, 
                 totalCount = games.Count, 
-                searchTerm = search,
+                searchTerm = sanitizedSearch,
             });
         }
         catch (Exception ex)

@@ -117,8 +117,9 @@ public class EngineDataManager : IEngineDataManager
         lock (_attemptsLock)
         {
             var currentState = GetCurrentState();
-            _cache.Set(STEAM_GAMES_UPDATE_ATTEMPTS, currentState.SteamGamesDictUpdateAttempts++);
-            _logger.LogWarning("Update attempt #{Attempt} failed", currentState.SteamGamesDictUpdateAttempts);    
+            var newAttempts = currentState.SteamGamesDictUpdateAttempts + 1;
+            _cache.Set(STEAM_GAMES_UPDATE_ATTEMPTS, newAttempts);
+            _logger.LogWarning("Update attempt #{Attempt} failed", newAttempts);  
             return Task.CompletedTask;
         }
     }
