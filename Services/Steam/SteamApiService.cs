@@ -86,7 +86,7 @@ public class SteamApiService : ISteamApiService
             try
             {
                 var url = baseUrl.Replace("{CC}", cc);
-                _logger.LogInformation($"Calling Steam API for currency: {cc}");
+                _logger.LogInformation($"Calling Steam API for currency/country: {cc}");
             
                 var response = await _httpClient.GetAsync(url);
                 response.EnsureSuccessStatusCode();
@@ -99,7 +99,14 @@ public class SteamApiService : ISteamApiService
 
                 if (!dataProperty.Value.TryGetProperty("success", out JsonElement successElement) || !successElement.GetBoolean())
                 {
-                    throw new Exception("Fetching game information from Steam API failed. (wrong appid?)");
+                    // Determines if the game is not available in a particular country or the appid is incorrect. In US is everything supported (I hope) and the cc code of US is first,
+                    // so if the game is not available in US, it is probably not available in any other country and throw exception.
+                    if (cc.Equals("us"))
+                    {
+                        throw new Exception("Fetching game information from Steam API failed. (wrong appid?)");    
+                    }
+                    _logger.LogWarning("Game is not available in country {Currency}. Skipping...", cc);
+                    continue;
                 }
             
                 if (!dataProperty.Value.TryGetProperty("data", out JsonElement dataElement))
@@ -109,6 +116,16 @@ public class SteamApiService : ISteamApiService
                     throw new Exception("Price overview property not found in Steam API response");
                     
                 var price = priceElement.Deserialize<SteamPrice>();
+
+                price.Currency = cc switch
+                {
+                    "ar" => "USD-LATAM",
+                    "dz" => "USD-CIS",
+                    "np" => "USD-SASIA",
+                    "am" => "USD-MENA",
+                    _ => price.Currency
+                };
+
                 priceList.Add(price);
             }
             catch (Exception e)

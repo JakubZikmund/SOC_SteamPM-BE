@@ -48,8 +48,17 @@ public class CurrencyService : ICurrencyService
 
     void ConvertPrice(Price price, string currentCurr, CurrencyModel currData)
     {
-        price.ConvertedInitial = price.Initial/currData.ConversionalRates[currentCurr];
-        price.ConvertedFinal = price.Final/currData.ConversionalRates[currentCurr];
+        var usdRegions = new[] { "USD-LATAM", "USD-CIS", "USD-SASIA", "USD-MENA" };
+        if (usdRegions.Contains(currentCurr))
+        {
+            price.ConvertedInitial = price.Initial/currData.ConversionalRates["USD"];
+            price.ConvertedFinal = price.Final/currData.ConversionalRates["USD"];
+        }
+        else
+        {
+            price.ConvertedInitial = price.Initial/currData.ConversionalRates[currentCurr];
+            price.ConvertedFinal = price.Final/currData.ConversionalRates[currentCurr];
+        }
     }
     
 }

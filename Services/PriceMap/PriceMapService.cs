@@ -38,8 +38,7 @@ public class PriceMapService : IPriceMapService
         {
             if (!_dataManager.TryGetCachedPriceMap($"game-{appId}", out var gameInfo))
             {
-                // TODO: přidat všechny země
-                string[] ccs = {"us", "ua", "sk", "ru"};
+                string[] ccs = { "us","ae", "au", "br", "ca", "ch", "cl", "cn", "co", "cr", "cz", "gb", "il", "id", "in", "jp", "kr", "kw", "kz", "mx", "my", "no", "nz", "pe", "ph", "pl", "qa", "ru", "sa", "sg", "th", "tw", "ua", "ar", "dz", "np", "am", "uy", "vn", "za"};
 
                 gameInfo = GameObjectBuilder(await _steamApi.FetchGameById(appId, "cz"), await _steamApi.FetchGamePrices(appId, ccs));
             
@@ -68,7 +67,8 @@ public class PriceMapService : IPriceMapService
         foreach (var steamPrice in steamPrices)
         {
             var price = new Price(steamPrice.DiscountPercent, steamPrice.Final, steamPrice.Initial);
-            game.PriceOverview.TryAdd(steamPrice.Currency, price);
+            
+            game.PriceOverview.Add(steamPrice.Currency, price);
         }
         return game;
     }
