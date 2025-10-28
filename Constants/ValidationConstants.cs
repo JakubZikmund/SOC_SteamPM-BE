@@ -1,4 +1,4 @@
-namespace SOC_SteamPM_BE.Utils;
+namespace SOC_SteamPM_BE.Constants;
 
 /// <summary>
 /// Constants for input validation across the application
