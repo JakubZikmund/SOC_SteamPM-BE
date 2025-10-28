@@ -25,13 +25,4 @@ public static class DataFactory
         }
         return gamesByNameLowercase;
     }
-    
-    public static JsonProperty ClearFirstLayerOfJsonData(string jsonContent)
-    {
-        var document = JsonDocument.Parse(jsonContent);
-        
-        var root = document.RootElement;
-        
-        return root.EnumerateObject().FirstOrDefault();
-    }
 }

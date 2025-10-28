@@ -2,7 +2,6 @@ using System.Text.Json;
 using Microsoft.Extensions.Options;
 using SOC_SteamPM_BE.Exceptions;
 using SOC_SteamPM_BE.Models;
-using SOC_SteamPM_BE.Utils;
 
 namespace SOC_SteamPM_BE.Services.Steam;
 
@@ -56,7 +55,7 @@ public class SteamApiService : ISteamApiService
         
             var jsonContent = await response.Content.ReadAsStringAsync();
 
-            var dataProperty = DataFactory.ClearFirstLayerOfJsonData(jsonContent);
+            var dataProperty = ClearFirstLayerOfJsonData(jsonContent);
 
             if (!dataProperty.Value.TryGetProperty("success", out JsonElement successElement) || !successElement.GetBoolean())
             {
@@ -106,7 +105,7 @@ public class SteamApiService : ISteamApiService
                 
                 Console.WriteLine(jsonContent);
 
-                var dataProperty = DataFactory.ClearFirstLayerOfJsonData(jsonContent);
+                var dataProperty = ClearFirstLayerOfJsonData(jsonContent);
 
                 if (!dataProperty.Value.TryGetProperty("success", out JsonElement successElement) || !successElement.GetBoolean())
                 {
@@ -152,5 +151,12 @@ public class SteamApiService : ISteamApiService
         }
         
         return priceList;
+    }
+    
+    private static JsonProperty ClearFirstLayerOfJsonData(string jsonContent)
+    {
+        var document = JsonDocument.Parse(jsonContent);
+        var root = document.RootElement;
+        return root.EnumerateObject().FirstOrDefault();
     }
 }
