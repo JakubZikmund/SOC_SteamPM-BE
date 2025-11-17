@@ -19,7 +19,7 @@ public class AppList
 
 public class SteamGamesResponse
 {
-    [JsonPropertyName("applist")]
+    [JsonPropertyName("response")]
     public AppList Applist { get; set; } = new();
 }
 

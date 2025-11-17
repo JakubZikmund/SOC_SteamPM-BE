@@ -31,6 +31,18 @@ public class Program
         builder.Services.AddControllers();
         builder.Services.AddMemoryCache();
         
+        // CORS policy - Allow all
+        builder.Services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(policy =>
+            {
+                policy.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
+            });
+        });
+
+        
         // Configuration binding - appsettings.json
         builder.Services.Configure<SteamApiSettings>(
             builder.Configuration.GetSection("SteamApi"));
@@ -106,6 +118,7 @@ public class Program
         }
 
         app.UseHttpsRedirection();
+        app.UseCors();
         app.MapControllers();
 
         app.Run();

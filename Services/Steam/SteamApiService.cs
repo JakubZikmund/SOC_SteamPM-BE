@@ -28,9 +28,10 @@ public class SteamApiService : ISteamApiService
 
     public async Task<SteamGamesResponse> FetchAllGames()
     {
-        _logger.LogInformation("Calling Steam API: {Url}", _steamSettings.AllGamesUrl);
+        var url = _steamSettings.AllGamesUrl.Replace("{API-KEY}", _steamSettings.ApiKey);
+        _logger.LogInformation("Calling Steam API: {Url}", url);
         
-        var response = await _httpClient.GetAsync(_steamSettings.AllGamesUrl);
+        var response = await _httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();
 
         var jsonContent = await response.Content.ReadAsStringAsync();
@@ -106,8 +107,8 @@ public class SteamApiService : ISteamApiService
 
                 if (!dataProperty.Value.TryGetProperty("success", out JsonElement successElement) || !successElement.GetBoolean())
                 {
-                    // Determines if the game is not available in a particular country or the appid is incorrect. In US is everything supported (I hope) and the cc code of US is first,
-                    // so if the game is not available in US, it is probably not available in any other country and throw exception.
+                    // Determines if the game is not available in a particular country or the appid is incorrect. In US is everything supported (at least I hope) and the cc code of US is first,
+                    // so if the game is not available in US, it is probably not available in any other country -> throw exception.
                     if (cc.Equals("us"))
                     {
                         _logger.LogWarning("Game with AppId {AppId} not found in Steam API", appId);
@@ -120,8 +121,11 @@ public class SteamApiService : ISteamApiService
                 if (!dataProperty.Value.TryGetProperty("data", out JsonElement dataElement))
                     throw new Exception("Data property not found in Steam API response");
                 
-                if (!dataElement.TryGetProperty("price_overview", out JsonElement priceElement))
-                    throw new Exception("Price overview property not found in Steam API response");
+                if (dataElement.ValueKind == JsonValueKind.Array || !dataElement.TryGetProperty("price_overview", out JsonElement priceElement))
+                {
+                    _logger.LogWarning("Game is not available in country {Currency}. Skipping... (price_overview not found)", cc);
+                    continue;   
+                }
                     
                 var price = priceElement.Deserialize<SteamPrice>();
 

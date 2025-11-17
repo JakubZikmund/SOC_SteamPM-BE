@@ -42,7 +42,7 @@ public class EngineDataManager : IEngineDataManager
     {
         _cache.Set(STATUS_KEY, EngineStatus.Loading);
         _cache.Set(STEAM_GAMES_KEY, new Dictionary<string, SearchGameModel>());
-        _cache.Set(STEAM_GAMES_LAST_UPDATED_KEY, "");
+        _cache.Set(STEAM_GAMES_LAST_UPDATED_KEY, DateTime.MinValue);
         _cache.Set(STEAM_GAMES_UPDATE_ATTEMPTS, 0);
         
         _logger.LogInformation("Data manager initialized successfully.");
