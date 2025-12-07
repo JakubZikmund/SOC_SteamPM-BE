@@ -8,6 +8,7 @@ using SOC_SteamPM_BE.Services.GameSearch;
 using SOC_SteamPM_BE.Services.Initialization;
 using SOC_SteamPM_BE.Services.PriceMap;
 using SOC_SteamPM_BE.Services.Steam;
+using SOC_SteamPM_BE.Services.Wishlist;
 
 namespace SOC_SteamPM_BE;
 
@@ -50,6 +51,8 @@ public class Program
             builder.Configuration.GetSection("DataStorage"));
         builder.Services.Configure<CurrencySettings>(
             builder.Configuration.GetSection("CurrencyApi"));
+        builder.Services.Configure<WishlistSettings>(
+            builder.Configuration.GetSection("Wishlists"));
 
         // Register our custom services
         builder.Services.AddHttpClient();
@@ -72,6 +75,8 @@ public class Program
         builder.Services.AddScoped<IGameSearchInitializationService, GameSearchInitializationService>(); 
         builder.Services.AddScoped<IGameSearchService, GameSearchService>();
         
+        // Wishlist service
+        builder.Services.AddScoped<IWishlistService, WishlistService>();
         
         // startup & background service
         builder.Services.AddHostedService<WebApiInitializationService>();

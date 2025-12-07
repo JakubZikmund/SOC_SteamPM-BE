@@ -29,6 +29,9 @@ public class SteamGameApiResponse
     [JsonPropertyName("header_image")]
     public string HeaderImage {get; set;} = string.Empty;
     
+    [JsonPropertyName("capsule_imagev5")]
+    public string CapsuleImage {get; set;} = string.Empty;
+    
     [JsonPropertyName("price_overview")]
     public SteamPrice? PriceOverview {get; set;} 
 }
@@ -62,7 +65,7 @@ public class SteamPrice
 
 public class GameInfo
 {
-    public GameInfo(string name, int appId, string shortDescription, string releaseDate, List<string> developers, List<string> publishers, string headerImage)
+    public GameInfo(string name, int appId, string shortDescription, string releaseDate, List<string> developers, List<string> publishers, string headerImage, string capsuleImage)
     {
         Name = name;
         AppId = appId;
@@ -71,6 +74,7 @@ public class GameInfo
         Developers = developers;
         Publishers = publishers;
         HeaderImage = headerImage;
+        CapsuleImage = capsuleImage;
     }
 
     public string Name {get; set;}
@@ -82,6 +86,7 @@ public class GameInfo
     public List<string> Categories {get; set;}
     public List<string> Genres {get; set;}
     public string HeaderImage {get; set;} 
+    public string CapsuleImage {get; set;} 
     
     public Dictionary<string, Price> PriceOverview {get; set;} = new();
 }

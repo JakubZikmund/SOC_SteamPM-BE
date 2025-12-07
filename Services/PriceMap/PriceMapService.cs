@@ -76,7 +76,7 @@ public class PriceMapService : IPriceMapService
 
     GameInfo GameObjectBuilder(SteamGameApiResponse gameInfo, List<SteamPrice> steamPrices)
     {
-        var game = new GameInfo(gameInfo.Name, gameInfo.AppId, gameInfo.ShortDescription, gameInfo.ReleaseDate.Date, gameInfo.Developers, gameInfo.Publishers, gameInfo.HeaderImage);
+        var game = new GameInfo(gameInfo.Name, gameInfo.AppId, gameInfo.ShortDescription, gameInfo.ReleaseDate.Date, gameInfo.Developers, gameInfo.Publishers, gameInfo.HeaderImage, gameInfo.CapsuleImage);
         
         game.Categories = gameInfo.Categories.Select(c => c.Description).ToList();
         game.Genres = gameInfo.Genres.Select(c => c.Description).ToList();

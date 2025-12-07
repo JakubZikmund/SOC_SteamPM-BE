@@ -18,6 +18,8 @@ public interface IEngineDataManager
     void SetCachedPriceMap(string gameKey, GameInfo priceMap);
     bool TryGetCachedCurrency(string currKey, out CurrencyModel currData);
     void SetCachedCurrency(string currKey, CurrencyModel currData);
+    void SetCachedWishlistGame(string wishKey, WishlistGame wishData);
+    bool TryGetCachedWishlistGame(string wishKey, out WishlistGame wishData);
 }
 
 public class EngineDataManager : IEngineDataManager
@@ -165,6 +167,23 @@ public class EngineDataManager : IEngineDataManager
     {
         var cacheOptions = new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(24));
         _cache.Set(currKey, currData, cacheOptions);
+    }
+    
+    public bool TryGetCachedWishlistGame(string wishKey, out WishlistGame wishData)
+    {
+        if (_cache.TryGetValue(wishKey, out wishData))
+        {
+            _logger.LogInformation($"Wishlist game with key {wishKey} was found in cache");
+            return true;
+        }
+        _logger.LogInformation($"Wishlist game with key {wishKey} was not found in cache");
+        return false;
+    }
+
+    public void SetCachedWishlistGame(string wishKey, WishlistGame wishData)
+    {
+        var cacheOptions = new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(24));
+        _cache.Set(wishKey, wishData, cacheOptions);
     }
 }
 

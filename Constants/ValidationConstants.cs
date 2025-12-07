@@ -19,5 +19,10 @@ public static class ValidationConstants
     public const int MinSearchLength = 1;
     public const int MaxSearchLength = 200;
     public const string SearchErrorMessage = "Search term must be between 1 and 200 characters.";
+    
+    // Page validation
+    public const int MinPage = 1;
+    public const int MaxPage = int.MaxValue;
+    public const string PageErrorMessage = "Page must be a positive integer.";
 }
 

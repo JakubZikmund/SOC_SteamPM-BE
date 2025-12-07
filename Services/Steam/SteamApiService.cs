@@ -11,6 +11,7 @@ public interface ISteamApiService
     Task<SteamGamesResponse> FetchAllGames();
     Task<SteamGameApiResponse> FetchGameById(int appId, string cc);
     Task<List<SteamPrice>> FetchGamePrices(int appId, string[] ccs);
+    Task<List<WishlistItemResponseModel>> FetchWishlistItems(string steamId);
 }
 
 public class SteamApiService : ISteamApiService
@@ -174,6 +175,56 @@ public class SteamApiService : ISteamApiService
         }
         
         return priceList;
+    }
+
+    public async Task<List<WishlistItemResponseModel>> FetchWishlistItems(string steamId)
+    {
+        try
+        {
+            var baseUrl = _steamSettings.WishlistUrl.Replace("{API-KEY}", _steamSettings.ApiKey).Replace("{STEAMID}", steamId);
+            
+            _logger.LogInformation($"Calling Steam API for wishlist with steam ID: {steamId}");
+            
+            var response = await _httpClient.GetAsync(baseUrl);
+            response.EnsureSuccessStatusCode();
+                
+            var jsonContent = await response.Content.ReadAsStringAsync();
+                
+            var dataProperty = ClearFirstLayerOfJsonData(jsonContent);
+
+            if (dataProperty.Value.ValueKind == JsonValueKind.Object && !dataProperty.Value.EnumerateObject().Any())
+            {
+                throw new WishlistNotFoundException(); 
+            }
+            
+            if (!dataProperty.Value.TryGetProperty("items", out JsonElement dataElement))
+                throw new Exception("Data property not found in Steam API response");
+                
+            var items = dataElement.Deserialize<List<WishlistItemResponseModel>>();
+            
+            items?.Sort((x, y) => y.Priority.CompareTo(x.Priority));
+            
+            return items ?? new List<WishlistItemResponseModel>();
+        }
+        catch (WishlistNotFoundException)
+        {
+            throw;
+        }
+        catch (HttpRequestException e)
+        {
+            if (e.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                _logger.LogError(e, "Request for steam api reached maximum - rate limit exceeded.");
+                throw new SteamApiRateLimitExceededException();
+            }
+            _logger.LogError(e, "Unexpected http request error while fetching wishlist for steam ID {SteamId}", steamId);
+            throw new Exception($"Failed to fetch wishlist for steam ID {steamId} from Steam API", e);   
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "An error occurred while fetching wishlist for steam ID {steamId}", steamId);
+            throw new Exception($"An error occurred while fetching wishlist for steam ID {steamId}.", e);
+        }
     }
     
     private static JsonProperty ClearFirstLayerOfJsonData(string jsonContent)
