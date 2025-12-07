@@ -55,7 +55,9 @@ namespace SOC_SteamPM_BE.Controllers
                     errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
                 });
             }
-            
+
+            //return Forbid();
+
             try
             {
                 var data = await _priceMapService.GetGameInfoAndPrices(appId, currency.ToUpperInvariant());
@@ -64,9 +66,9 @@ namespace SOC_SteamPM_BE.Controllers
             catch (GameNotFoundException ex)
             {
                 _logger.LogWarning("Game not found: {Message}", ex.Message);
-                return NotFound(new 
-                { 
-                    error = "Game Not Found", 
+                return NotFound(new
+                {
+                    error = "Game Not Found",
                     message = $"Steam game with AppId {appId} was not found.",
                     appId = ex.AppId
                 });
@@ -74,11 +76,28 @@ namespace SOC_SteamPM_BE.Controllers
             catch (InvalidCurrencyException ex)
             {
                 _logger.LogWarning("Invalid currency code: {Message}", ex.Message);
-                return BadRequest(new 
-                { 
-                    error = "Invalid Currency", 
-                    message = $"Invalid currency code: '{ex.CurrencyCode}'. Please provide a valid currency code (e.g., EUR, USD, CZK).",
+                return BadRequest(new
+                {
+                    error = "Invalid Currency",
+                    message =
+                        $"Invalid currency code: '{ex.CurrencyCode}'. Please provide a valid currency code (e.g., EUR, USD, CZK).",
                     currencyCode = ex.CurrencyCode
+                });
+            }
+            catch (SteamApiRateLimitExceededException)
+            {
+                return StatusCode(429, new
+                {
+                    error = "Steam API rate limit exceed",
+                    message = "Steam API rate limit exceeded. Please try again later."
+                });
+            }
+            catch (CurrencyApiQuotaLimitReachedException)
+            {
+                return StatusCode(429, new
+                {
+                    error = "Currency API rate limit expired",
+                    message = "Currency API quota expired. Please use different currency or try again later."
                 });
             }
             catch (Exception ex)

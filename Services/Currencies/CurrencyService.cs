@@ -45,6 +45,10 @@ public class CurrencyService : ICurrencyService
         {
             throw;
         }
+        catch (CurrencyApiQuotaLimitReachedException)
+        {
+            throw;
+        }
         catch (Exception e)
         {
             _logger.LogError(e, "Unexpected error while processing currencies for {Currency}", currency);

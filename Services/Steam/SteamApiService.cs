@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using SOC_SteamPM_BE.Exceptions;
@@ -79,10 +80,21 @@ public class SteamApiService : ISteamApiService
         {
             throw;
         }
+        catch (HttpRequestException e)
+        {
+            if (e.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                // Tady to zachytí error pokud 429
+                _logger.LogError(e, "Request for steam api reached maximum - rate limit exceeded.");
+                throw new SteamApiRateLimitExceededException();
+            }
+            _logger.LogError(e, "Unexpected http request error while fetching game info for AppId {AppId}", appId);
+            throw new Exception($"Failed to fetch game info for {appId} from Steam API", e);   
+        }
         catch (Exception e)
         {
             _logger.LogError(e, "Unexpected error while fetching game info for AppId {AppId}", appId);
-            throw new Exception($"Failed to fetch game info for {appId} from Steam API", e);
+            throw new Exception($"An error occurred while fetching game info for {appId}.", e);
         }
     }
     
@@ -143,6 +155,16 @@ public class SteamApiService : ISteamApiService
             catch (GameNotFoundException)
             {
                 throw;
+            }
+            catch (HttpRequestException e)
+            {
+                if (e.StatusCode == HttpStatusCode.TooManyRequests)
+                {
+                    _logger.LogError(e, "Request for steam api reached maximum - rate limit exceeded.");
+                    throw new SteamApiRateLimitExceededException();
+                }
+                _logger.LogError(e, "Unexpected http request error while fetching game info for AppId {AppId}", appId);
+                throw new Exception($"Failed to fetch game info for {appId} from Steam API", e);   
             }
             catch (Exception e)
             {

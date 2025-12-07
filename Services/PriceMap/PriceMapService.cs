@@ -34,23 +34,32 @@ public class PriceMapService : IPriceMapService
     
     public async Task<GameInfo> GetGameInfoAndPrices(int appId, string currency = "EUR")
     {
-        
+
         try
         {
             if (!_dataManager.TryGetCachedPriceMap(CacheKeys.Game(appId), out var gameInfo))
             {
 
-                gameInfo = GameObjectBuilder(await _steamApi.FetchGameById(appId, "cz"), await _steamApi.FetchGamePrices(appId, _steamApiSettings.Value.CountryCodes));
-            
+                gameInfo = GameObjectBuilder(await _steamApi.FetchGameById(appId, "cz"),
+                    await _steamApi.FetchGamePrices(appId, _steamApiSettings.Value.CountryCodes));
+
                 // uložení do paměti
                 _dataManager.SetCachedPriceMap(CacheKeys.Game(appId), gameInfo);
             }
-            
+
             await _currencyService.ConvertPrices(gameInfo.PriceOverview, currency);
-            
+
             return gameInfo;
         }
         catch (GameNotFoundException)
+        {
+            throw;
+        }
+        catch (SteamApiRateLimitExceededException)
+        {
+            throw;
+        }
+        catch (CurrencyApiQuotaLimitReachedException)
         {
             throw;
         }

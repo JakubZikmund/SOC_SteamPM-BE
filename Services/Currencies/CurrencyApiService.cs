@@ -38,8 +38,20 @@ public class CurrencyApiService : ICurrencyApiService
                 _logger.LogWarning("Invalid currency code: {Currency}", currency);
                 throw new InvalidCurrencyException(currency);
             }
-            
-            response.EnsureSuccessStatusCode();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var jsonErrorContent = await response.Content.ReadAsStringAsync();
+                var errorData = JsonSerializer.Deserialize<CurrencyErrorModel>(jsonErrorContent);
+
+                if (errorData is { Result: "error", ErrorType: "quota-reached" })
+                {
+                    throw new CurrencyApiQuotaLimitReachedException();
+                }
+                
+                response.EnsureSuccessStatusCode();       
+                
+            }
 
             var jsonContent = await response.Content.ReadAsStringAsync();
             var currencyData = JsonSerializer.Deserialize<CurrencyModel>(jsonContent);
@@ -60,6 +72,11 @@ public class CurrencyApiService : ICurrencyApiService
         {
             _logger.LogWarning("Invalid currency code: {Currency}", currency);
             throw new InvalidCurrencyException(currency, $"Currency code '{currency}' is not supported.", e);
+        }
+        catch (CurrencyApiQuotaLimitReachedException)
+        {
+            _logger.LogWarning("Currency API quota limit reached");
+            throw;
         }
         catch (Exception e)
         {
