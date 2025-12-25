@@ -2,15 +2,15 @@ namespace SOC_SteamPM_BE.Services.GameSearch;
 
 public class GameSearchSchedulerService : BackgroundService
 {
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<GameSearchSchedulerService> _logger;
     private readonly TimeSpan _checkInterval = TimeSpan.FromMinutes(1);
 
     public GameSearchSchedulerService(
-        IServiceProvider serviceProvider, 
+        IServiceScopeFactory scopeFactory, 
         ILogger<GameSearchSchedulerService> logger)
     {
-        _serviceProvider = serviceProvider;
+        _scopeFactory = scopeFactory;
         _logger = logger;
     }
     
@@ -29,19 +29,22 @@ public class GameSearchSchedulerService : BackgroundService
                 // If it is close to midnight (within 1 minute), refresh
                 if (timeUntilMidnight.TotalMinutes < 1)
                 {
-                    _logger.LogInformation("Midnight reached, starting scheduled refresh");
-                    
-                    var refreshDataService = _serviceProvider.GetRequiredService<IGameSearchRefreshFromApiService>();
-                    
-                    var success = await refreshDataService.RefreshFromApiAsync();
-                    
-                    if (success)
+                    using (var scope = _scopeFactory.CreateScope())
                     {
-                        _logger.LogInformation("Scheduled midnight refresh completed successfully");
-                    }
-                    else
-                    {
-                        _logger.LogError("Scheduled midnight refresh failed after all attempts - using old data");
+                        _logger.LogInformation("Midnight reached, starting scheduled refresh");
+                    
+                        var refreshDataService = scope.ServiceProvider.GetRequiredService<IGameSearchRefreshFromApiService>();
+                    
+                        var success = await refreshDataService.RefreshFromApiAsync();
+                    
+                        if (success)
+                        {
+                            _logger.LogInformation("Scheduled midnight refresh completed successfully");
+                        }
+                        else
+                        {
+                            _logger.LogError("Scheduled midnight refresh failed after all attempts - using old data");
+                        }
                     }
                     
                     // Wait 2 minutes to avoid multiple refreshes
