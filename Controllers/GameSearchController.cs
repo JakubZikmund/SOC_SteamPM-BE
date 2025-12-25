@@ -27,7 +27,7 @@ public class GameSearchController : ControllerBase
     /// <returns>List of matching games (max 10 results)</returns>
     /// <response code="200">Returns matching games</response>
     /// <response code="400">If the search parameter is invalid</response>
-    [HttpGet("searchGame")]
+    [HttpGet]
     public IActionResult SearchGames(
         [FromQuery]
         [StringLength(ValidationConstants.MaxSearchLength, MinimumLength = ValidationConstants.MinSearchLength,

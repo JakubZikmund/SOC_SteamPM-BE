@@ -32,7 +32,7 @@ namespace SOC_SteamPM_BE.Controllers
         /// <response code="200">Returns the game information with prices</response>
         /// <response code="400">If the request parameters are invalid</response>
         /// <response code="404">If the game is not found</response>
-        [HttpGet("game/{appId:int}")]
+        [HttpGet("{appId:int}")]
         public async Task<IActionResult> GetGameById(
             [Range(ValidationConstants.MinAppId, ValidationConstants.MaxAppId, 
                 ErrorMessage = ValidationConstants.AppIdErrorMessage)] 

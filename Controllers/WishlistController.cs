@@ -29,7 +29,7 @@ public class WishlistController : ControllerBase
     /// <response code="200">Returns wishlist games, current page and wishlist size</response>
     /// <response code="400">If the request parameters are invalid</response>
     /// <response code="404">If the wishlist is not found</response>
-    [HttpGet("wishlist/{page:int}")]
+    [HttpGet("{page:int}")]
         public async Task<IActionResult> GetWishlist(
             [FromQuery, Required] string steamId,
             [Range(ValidationConstants.MinPage, ValidationConstants.MaxPage, ErrorMessage = ValidationConstants.PageErrorMessage)] int page = 1
