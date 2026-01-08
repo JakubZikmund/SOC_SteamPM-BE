@@ -12,19 +12,19 @@ public class SteamGameApiResponse
     public string ShortDescription {get; set;} = string.Empty;
     
     [JsonPropertyName("release_date")]
-    public SteamDateItem ReleaseDate {get; set;}
-    
+    public SteamDateItem ReleaseDate {get; set;} = new();
+
     [JsonPropertyName("developers")]
-    public List<string> Developers {get; set;}
-    
+    public List<string> Developers {get; set;} = new();
+
     [JsonPropertyName("publishers")]
-    public List<string> Publishers {get; set;}
-    
+    public List<string> Publishers {get; set;} = new();
+
     [JsonPropertyName("categories")]
-    public List<SteamItem> Categories {get; set;}
-    
+    public List<SteamItem> Categories {get; set;} = new();
+
     [JsonPropertyName("genres")]
-    public List<SteamItem> Genres {get; set;}
+    public List<SteamItem> Genres {get; set;} = new();
     
     [JsonPropertyName("header_image")]
     public string HeaderImage {get; set;} = string.Empty;
@@ -73,6 +73,8 @@ public class GameInfo
         ReleaseDate = releaseDate;
         Developers = developers;
         Publishers = publishers;
+        Categories = new();
+        Genres = new();
         HeaderImage = headerImage;
         CapsuleImage = capsuleImage;
     }

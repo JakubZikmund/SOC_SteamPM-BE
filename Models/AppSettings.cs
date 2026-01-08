@@ -7,7 +7,7 @@ public class SteamApiSettings
     public string GameAllInfo { get; set; } = string.Empty;
     public string GamePriceInfo { get; set; } = string.Empty;
     public string WishlistUrl { get; set; } = string.Empty;
-    public string[] CountryCodes { get; set; }
+    public string[] CountryCodes { get; set; } = Array.Empty<string>();
 }
 
 public class DataStorageSettings

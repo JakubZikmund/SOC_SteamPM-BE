@@ -8,5 +8,5 @@ public class CurrencyModel
     public string BaseCurrency {get; set;} = String.Empty;
     
     [JsonPropertyName("conversion_rates")]
-    public Dictionary<string, decimal> ConversionalRates {get; set;}
+    public Dictionary<string, decimal> ConversionalRates {get; set;} = new();
 }

@@ -142,6 +142,12 @@ public class SteamApiService : ISteamApiService
                     
                 var price = priceElement.Deserialize<SteamPrice>();
 
+                if (price == null)
+                {
+                    _logger.LogWarning("Failed to deserialize price for country {Currency}. Skipping...", cc);
+                    continue;
+                }
+
                 price.Currency = cc switch
                 {
                     "ar" => "USD-LATAM",

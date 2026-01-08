@@ -137,12 +137,13 @@ public class EngineDataManager : IEngineDataManager
 
     public bool TryGetCachedPriceMap(string gameKey, out GameInfo priceMap)
     {
-        if (_cache.TryGetValue(gameKey, out priceMap))
+        if (_cache.TryGetValue(gameKey, out priceMap!) && priceMap != null)
         {
             _logger.LogInformation($"Price map for game with key {gameKey} was found in cache");
             return true;
         }
         _logger.LogInformation($"Price map for game with key {gameKey} was not found in cache");
+        priceMap = null!;
         return false;
     }
 
@@ -154,12 +155,13 @@ public class EngineDataManager : IEngineDataManager
     
     public bool TryGetCachedCurrency(string currKey, out CurrencyModel currData)
     {
-        if (_cache.TryGetValue(currKey, out currData))
+        if (_cache.TryGetValue(currKey, out currData!) && currData != null)
         {
             _logger.LogInformation($"Currency with key {currKey} was found in cache");
             return true;
         }
         _logger.LogInformation($"Currency with key {currKey} was not found in cache");
+        currData = null!;
         return false;
     }
 
@@ -171,12 +173,13 @@ public class EngineDataManager : IEngineDataManager
     
     public bool TryGetCachedWishlistGame(string wishKey, out WishlistGame wishData)
     {
-        if (_cache.TryGetValue(wishKey, out wishData))
+        if (_cache.TryGetValue(wishKey, out wishData!) && wishData != null)
         {
             _logger.LogInformation($"Wishlist game with key {wishKey} was found in cache");
             return true;
         }
         _logger.LogInformation($"Wishlist game with key {wishKey} was not found in cache");
+        wishData = null!;
         return false;
     }
 
