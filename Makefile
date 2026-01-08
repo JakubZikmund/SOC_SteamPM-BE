@@ -4,4 +4,5 @@ build:
 	dotnet build
 
 run:
+	dotnet restore
 	dotnet run

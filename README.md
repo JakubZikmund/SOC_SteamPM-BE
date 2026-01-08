@@ -47,6 +47,7 @@ make run
 Alternativně:
 
 ```bash
+dotnet restore
 dotnet run
 ```
 
