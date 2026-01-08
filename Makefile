@@ -1,8 +1,4 @@
-﻿.PHONY: build, run
+﻿.PHONY: build
 
 build:
 	dotnet build
-
-run:
-	dotnet restore
-	dotnet run

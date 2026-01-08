@@ -22,8 +22,8 @@ Vytvořte soubor `.env` v kořenovém adresáři projektu podle šablony `.env.e
 
 ### Pro nasazení do produkce
 V rámci serverového prostředí, na kterém bude aplikace fungovat, je zapotřebí vložit do proměnných systému následující hodnoty:
-- `SteamApi__ApiKey=___váš_steam_api_klíč___`
-- `CurrencyApi__ApiKey=___váš_exchangeRates_api_klíč___`
+- `SteamApi__ApiKey=váš_steam_api_klíč`
+- `CurrencyApi__ApiKey=váš_exchangeRates_api_klíč`
 
 ## Produkční build
 
@@ -37,17 +37,14 @@ Alternativně:
 dotnet build
 ```
 
-Zkompiluje projekt, nainstaluje závislosti a vytvoří spustitelné DLL soubory ve složce . `bin/Debug/net8.0/`
+Zkompiluje projekt, nainstaluje závislosti a vytvoří spustitelné DLL soubory ve složce `bin/Debug/net8.0/`.
 
 ## Vývojové prostředí
 ```bash
-make run
-```
-
-Alternativně:
-
-```bash
+# Kontrola a instalace závislostí
 dotnet restore
+
+# Spuštění vývojového serveru
 dotnet run
 ```
 
