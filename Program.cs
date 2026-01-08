@@ -49,8 +49,6 @@ public class Program
         // Configuration binding - appsettings.json
         builder.Services.Configure<SteamApiSettings>(
             builder.Configuration.GetSection("SteamApi"));
-        builder.Services.Configure<DataStorageSettings>(
-            builder.Configuration.GetSection("DataStorage"));
         builder.Services.Configure<CurrencySettings>(
             builder.Configuration.GetSection("CurrencyApi"));
         builder.Services.Configure<WishlistSettings>(
@@ -72,7 +70,6 @@ public class Program
         builder.Services.AddScoped<ICurrencyService, CurrencyService>();
         
         // GameSearch services
-        builder.Services.AddScoped<IGameSearchFileService, GameSearchFileService>(); 
         builder.Services.AddScoped<IGameSearchRefreshFromApiService, GameSearchRefreshFromApiService>(); 
         builder.Services.AddScoped<IGameSearchInitializationService, GameSearchInitializationService>(); 
         builder.Services.AddScoped<IGameSearchService, GameSearchService>();

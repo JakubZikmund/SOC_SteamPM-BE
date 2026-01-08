@@ -1,4 +1,5 @@
 using SOC_SteamPM_BE.Managers;
+using SOC_SteamPM_BE.Models;
 using SOC_SteamPM_BE.Services.Steam;
 using SOC_SteamPM_BE.Utils;
 
@@ -43,7 +44,7 @@ public class GameSearchRefreshFromApiService : IGameSearchRefreshFromApiService
                 
                 var newData = await _steamApi.FetchAllGames();
 
-                var  games = DataFactory.DictionaryFromSteamGames(newData);
+                var  games = DictionaryFromSteamGames(newData);
                 
                 await _dataManager.UpdateSteamGamesDictAsync(games);
                 
@@ -72,6 +73,27 @@ public class GameSearchRefreshFromApiService : IGameSearchRefreshFromApiService
         }
 
         return false;
+    }
+    
+    Dictionary<string, SearchGameModel> DictionaryFromSteamGames(SteamGamesResponse? data)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+
+        var games = data.Applist.Apps;
+
+        if (games == null)
+            throw new Exception("No games found!");
+        
+        var gamesByNameLowercase = new Dictionary<string, SearchGameModel>();
+        foreach (var game in games)
+        {
+            if (string.IsNullOrWhiteSpace(game.Name))
+                continue;
+
+            var nameLower = game.Name.ToLowerInvariant();
+            gamesByNameLowercase[nameLower] = game;
+        }
+        return gamesByNameLowercase;
     }
 }
 
